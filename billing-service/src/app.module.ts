@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BillingModule } from './billing/billing.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BillingAccount } from './entities/billing-account.entity';
+import { Payment } from './entities/payment.entity';
+import { BillingInbox } from './inbox/billing-inbox.entity';
+import { config } from "dotenv";
+
+config()
 
 @Module({
   imports: [
@@ -13,10 +18,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: process.env.DB_USERNAME,
       password: 'postgres',
       database: process.env.DB_DATABASE,
-      entities: [],
+      entities: [BillingAccount,Payment],
       synchronize: false,
     }),
-    BillingModule],
+    ],
   controllers: [AppController],
   providers: [AppService],
 })

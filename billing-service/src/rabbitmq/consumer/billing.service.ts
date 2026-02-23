@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
-import { BillingAccount } from "./entities/billing-account.entity"
-import { Payment } from "./entities/payment.entity"
+import { BillingAccount } from "../../entities/billing-account.entity"
+import { Payment } from "../../entities/payment.entity"
 
 @Injectable()
 export class BillingService {
@@ -16,31 +16,37 @@ export class BillingService {
   ) {}
 
   async handleOrderPlaced(payload: any) {
+    console.log('comming in thess',payload)
 
     const account = await this.accountRepo.findOne({
-      where: { customerId: payload.customerId }
+      where: { card_number: payload.customerId }
     })
 
     if (!account) {
-      throw new Error("Billing account not found")
+      console.log("Billing account not found")
+      return {message:'payment_failed'}
     }
 
-    if (Number(account.balance) < Number(payload.totalAmount)) {
-      throw new Error("Insufficient balance")
+    if (Number(account.balance) < Number(payload.orderTotal)) {
+      // throw new Error("Insufficient balance")
+      console.log("Insufficient balance")
+      return {message:'payment_failed'}
     }
 
     account.balance =
       Number(account.balance) -
-      Number(payload.totalAmount)
+      Number(payload.orderTotal)
 
     await this.accountRepo.save(account)
 
     const payment = this.paymentRepo.create({
       orderId: payload.orderId,
-      amount: payload.totalAmount,
+      amount: payload.orderTotal,
       status: "PAID",
     })
 
     await this.paymentRepo.save(payment)
+
+    return {message:'payment_successfully'}
   }
 }

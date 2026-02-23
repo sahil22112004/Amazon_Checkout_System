@@ -3,48 +3,55 @@ import { MigrationInterface, QueryRunner,Table } from "typeorm";
 export class OrdersMigrations1771782575851 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-     await queryRunner.createTable(
-            new Table({
-                name: "orders",
-                columns: [
-                    {
-                        name: "id",
-                        type: "uuid",
-                        isPrimary: true,
-                        generationStrategy: "uuid",
-                        default: "uuid_generate_v4()",
-                    },
-                    {
-                        name: "customerId",
-                        type: "varchar",
-                        isNullable: false,
-                    },
-                    {
-                        name: "totalAmount",
-                        type: "numeric",
-                        precision: 12,
-                        scale: 2,
-                        isNullable: false,
-                    },
-                    {
-                        name: "status",
-                        type: "sales.order_status_enum",
-                        default: "'PENDING'",
-                        isNullable: false,
-                    },
-                    {
-                        name: "createdAt",
-                        type: "timestamp",
-                        default: "now()",
-                    },
-                ],
-            }),
-            true
-        );
-    }
+      await queryRunner.createTable(
+      new Table({
+        name: 'orders',
+        columns: [
+          {
+            name: 'orderId',
+            type: 'uuid',
+            isPrimary: true,
+          },
+          {
+            name: 'customerId',
+            type: 'uuid',
+            isNullable: false,
+          },
+          {
+            name: 'products',
+            type: 'jsonb',
+            isNullable: false,
+          },
+          {
+            name: 'orderTotal',
+            type: 'decimal',
+            isNullable: false,
+          },
+          {
+            name: 'status',
+            type: 'enum',
+            enum: [
+              'PENDING',
+              'PLACED',
+              'PAYMENT_FAILED',
+              'BILLED',
+              'READY_TO_SHIP',
+              'CANCELED',
+            ],
+            default: `'PENDING'`,
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+        ],
+      }),
+      true,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-
-        await queryRunner.dropTable("sales.orders");
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropTable('orders');
+  }
 }

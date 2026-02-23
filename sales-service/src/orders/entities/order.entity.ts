@@ -1,29 +1,36 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, OneToMany } from 'typeorm'
-import { OrderItem } from './order-item.entity'
+import { Entity, Column, CreateDateColumn, PrimaryColumn } from 'typeorm';
 
 @Entity('orders')
 export class Order {
+  @PrimaryColumn('uuid')
+  orderId: string;
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string
+  @Column('uuid')
+  customerId: string;
 
-    @Column()
-    customerId: string
+  @Column({ type: 'jsonb' })
+  products: {
+    productId: string;
+    quantity: number;
+  }[];
 
-    @Column({ type: 'numeric', precision: 12, scale: 2 })
-    totalAmount: number
+  @Column({ type: 'decimal'})
+  orderTotal: number;
 
-    @Column({
-        type: 'enum',
-        enum: ['PENDING', 'PLACED', 'BILLED', 'READY_TO_SHIP'],
-        default: 'PENDING'
-    })
-    status: string
+  @Column({
+    type: 'enum',
+    enum: [
+      'PENDING',
+      'PLACED',
+      'PAYMENT_FAILED',
+      'BILLED',
+      'READY_TO_SHIP',
+      'CANCELED',
+    ],
+    default: 'PENDING',
+  })
+  status: string;
 
-    @CreateDateColumn()
-    createdAt: Date
-
-    @OneToMany(() => OrderItem, (item) => item.order)
-    items: OrderItem[]
-
+  @CreateDateColumn()
+  createdAt: Date;
 }

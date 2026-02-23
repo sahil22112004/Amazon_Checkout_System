@@ -8,14 +8,12 @@ export class BillingAccountsMigration1771784443914 implements MigrationInterface
                 name: "billing_accounts",
                 columns: [
                     {
-                        name: "id",
+                        name: "billing_account_id",
                         type: "uuid",
                         isPrimary: true,
-                        generationStrategy: "uuid",
-                        default: "uuid_generate_v4()",
                     },
                     {
-                        name: "customerId",
+                        name: "card_number",
                         type: "varchar",
                         isNullable: false,
                     },

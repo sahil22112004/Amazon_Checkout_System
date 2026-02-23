@@ -5,7 +5,7 @@ export enum OutboxStatus {
     PUBLISHED = 'PUBLISHED'
 }
 
-@Entity({ name: 'sales_outbox', schema: 'sales' })
+@Entity('sales_outbox')
 export class SalesOutbox {
 
     @PrimaryGeneratedColumn('uuid')
@@ -15,7 +15,7 @@ export class SalesOutbox {
     eventType: string
 
     @Column({ type: 'jsonb' })
-    payload: any
+    messagePayload: any
 
     @Column({
         type: 'enum',

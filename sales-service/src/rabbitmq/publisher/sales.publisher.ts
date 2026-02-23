@@ -2,8 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { RabbitMQConnection } from "./rabbitmq.connection";
-import { SalesOutbox, OutboxStatus } from "../outbox/sales-outbox.entity";
+import { RabbitMQConnection } from "../rabbitmq.connection";
+import { SalesOutbox, OutboxStatus } from "../../outbox/sales-outbox.entity";
 
 @Injectable()
 export class SalesPublisher {
@@ -14,12 +14,11 @@ export class SalesPublisher {
     private rabbitConnection: RabbitMQConnection
   ) {}
 
-  @Cron("*/5 * * * * *")
   async publishPendingMessages() {
 
     const channel = await this.rabbitConnection.getChannel();
 
-    await channel.assertExchange("orders_exchange", "topic", {
+    await channel.assertExchange("notification_exchange", "fanout", {
       durable: true,
     });
 
@@ -28,11 +27,18 @@ export class SalesPublisher {
     });
 
     for (const msg of pendingMessages) {
+      const payload = {
+        messageId: msg.id,
+        eventType: msg.eventType,
+        message: msg.messagePayload,
+      };
 
       channel.publish(
-        "orders_exchange",
-        msg.eventType,
-        Buffer.from(JSON.stringify(msg.payload)),
+        // "orders_exchange",
+        // "order.placed",
+        "notification_exchange",
+        "",
+        Buffer.from(JSON.stringify(payload)),
         { persistent: true }
       );
 

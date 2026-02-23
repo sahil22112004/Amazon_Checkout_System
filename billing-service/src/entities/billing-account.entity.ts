@@ -4,10 +4,10 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm'
 export class BillingAccount {
 
     @PrimaryGeneratedColumn('uuid')
-    id: string
+    billing_account_id: string
 
     @Column()
-    customerId: string
+    card_number: string
 
     @Column()
     balance: number

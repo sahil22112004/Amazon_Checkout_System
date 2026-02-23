@@ -1,5 +1,8 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import * as amqp from "amqplib";
+import { config } from "dotenv";
+
+config();
 
 @Injectable()
 export class RabbitMQConnection implements OnModuleInit, OnModuleDestroy {

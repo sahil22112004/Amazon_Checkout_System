@@ -3,9 +3,6 @@ import { MigrationInterface, QueryRunner, Table } from "typeorm";
 export class SalesOutboxMigration1771785016458 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-     await queryRunner.query(`
-            CREATE TYPE sales.outbox_status_enum AS ENUM ('PENDING', 'PUBLISHED')
-        `);
 
         await queryRunner.createTable(
             new Table({
@@ -24,13 +21,14 @@ export class SalesOutboxMigration1771785016458 implements MigrationInterface {
                         isNullable: false,
                     },
                     {
-                        name: "payload",
+                        name: "messagePayload",
                         type: "jsonb",
                         isNullable: false,
                     },
                     {
                         name: "status",
-                        type: "sales.outbox_status_enum",
+                        type:'enum',
+                        enum:['PENDING','PUBLISHED'],
                         default: "'PENDING'",
                     },
                     {
@@ -46,6 +44,5 @@ export class SalesOutboxMigration1771785016458 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.dropTable("sales.sales_outbox");
-        await queryRunner.query(`DROP TYPE sales.outbox_status_enum`);
     }
 }

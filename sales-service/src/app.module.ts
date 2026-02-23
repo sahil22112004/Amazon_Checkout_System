@@ -5,8 +5,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ScheduleModule } from "@nestjs/schedule";
 import { config } from "dotenv";
 import { OrdersModule } from "./orders/orders.module";
-import { RabbitMQConnection } from "./rabbitmq/rabbitmq.connection";
-import { SalesPublisher } from "./rabbitmq/sales.publisher";
+import { Order } from "./orders/entities/order.entity";
+import { SalesOutbox } from "./outbox/sales-outbox.entity";
 
 
 config();
@@ -21,14 +21,12 @@ config();
       username: process.env.DB_USERNAME,
       password: 'postgres',
       database: process.env.DB_DATABASE,
-      entities: [],
+      entities: [Order,SalesOutbox],
       synchronize: false,
     }),
     OrdersModule,
   ],
   controllers: [AppController],
-  providers: [AppService,
-    RabbitMQConnection,SalesPublisher
-  ],
+  providers: [AppService],
 })
 export class AppModule { }
