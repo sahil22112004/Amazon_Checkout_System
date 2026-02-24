@@ -6,6 +6,7 @@ import { BillingAccount } from './entities/billing-account.entity';
 import { Payment } from './entities/payment.entity';
 import { BillingInbox } from './inbox/billing-inbox.entity';
 import { config } from "dotenv";
+import { BillingModule } from './billing/billing.module';
 
 config()
 
@@ -21,6 +22,7 @@ config()
       entities: [BillingAccount,Payment],
       synchronize: false,
     }),
+    BillingModule,
     ],
   controllers: [AppController],
   providers: [AppService],

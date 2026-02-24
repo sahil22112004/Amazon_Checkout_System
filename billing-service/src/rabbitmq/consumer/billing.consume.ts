@@ -21,11 +21,11 @@ export class RabbitMQConsumer implements OnModuleInit {
         //   durable: true,
         // });
 
-        await channel.assertExchange("notification_exchange", "fanout", {
+        await channel.assertExchange("order_exchange", "fanout", {
             durable: true,
         });
 
-        await channel.assertExchange("order_status", "fanout", {
+        await channel.assertExchange("bill_order_status_exchange", "fanout", {
             durable: true,
         });
 
@@ -39,18 +39,18 @@ export class RabbitMQConsumer implements OnModuleInit {
         //   "order.placed"
         // );
 
-        await channel.assertQueue("notification_queue", { durable: true });
+        await channel.assertQueue("order_queue", { durable: true });
 
         await channel.bindQueue(
-            "notification_queue",
-            "notification_exchange",
+            "order_queue",
+            "order_exchange",
             ""
         );
 
         console.log("Billing Consumer Started...");
 
         channel.consume(
-            "notification_queue",
+            "order_queue",
             async (msg: any) => {
                 if (!msg) return;
 
@@ -77,10 +77,12 @@ export class RabbitMQConsumer implements OnModuleInit {
                         const payment_status = await this.billingService.handleOrderPlaced(data.message);
                         if (payment_status.message == 'payment_successfully') {
                             const payload = {
+                                orderId: data.message.orderId,
+                                eventType:'order.Billed',
                                 status: 'success'
                             }
                             channel.publish(
-                                "order_status",
+                                "bill_order_status_exchange",
                                 "",
                                 Buffer.from(JSON.stringify(payload)),
                                 { persistent: true }
@@ -88,10 +90,12 @@ export class RabbitMQConsumer implements OnModuleInit {
 
                         } else {
                             const payload = {
+                                orderId: data.message.orderId,
+                                eventType:'order.Billed',
                                 status: 'failed'
                             }
                             channel.publish(
-                                "order_status",
+                                "bill_order_status_exchange",
                                 "",
                                 Buffer.from(JSON.stringify(payload)),
                                 { persistent: true }

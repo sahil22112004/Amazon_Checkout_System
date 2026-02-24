@@ -18,7 +18,7 @@ export class SalesPublisher {
 
     const channel = await this.rabbitConnection.getChannel();
 
-    await channel.assertExchange("notification_exchange", "fanout", {
+    await channel.assertExchange("order_exchange", "fanout", {
       durable: true,
     });
 
@@ -34,9 +34,7 @@ export class SalesPublisher {
       };
 
       channel.publish(
-        // "orders_exchange",
-        // "order.placed",
-        "notification_exchange",
+        "order_exchange",
         "",
         Buffer.from(JSON.stringify(payload)),
         { persistent: true }

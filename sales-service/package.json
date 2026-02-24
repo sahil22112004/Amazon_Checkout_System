@@ -23,7 +23,8 @@
     "migration:revert": "npx ts-node ./node_modules/typeorm/cli migration:revert -d ./data-source.ts",
     "migration:generate": "npx ts-node ./node_modules/typeorm/cli migration:generate src/migrations/NewMigration -d ./data-source.ts",
     "seed:run": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs seed:run",
-    "dispatch": "ts-node src/rabbitmq/cli/bootstrap.ts dispatch"
+    "dispatch": "ts-node src/rabbitmq/cli/publisherCommand/bootstrap.ts dispatch",
+    "consume": "ts-node src/rabbitmq/cli/consumerCommand/bootstarp.ts consume"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

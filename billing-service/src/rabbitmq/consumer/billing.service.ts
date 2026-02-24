@@ -17,9 +17,10 @@ export class BillingService {
 
   async handleOrderPlaced(payload: any) {
     console.log('comming in thess',payload)
+    console.log("payload is",payload)
 
     const account = await this.accountRepo.findOne({
-      where: { card_number: payload.customerId }
+      where: { card_number: payload.billingAccountId }
     })
 
     if (!account) {

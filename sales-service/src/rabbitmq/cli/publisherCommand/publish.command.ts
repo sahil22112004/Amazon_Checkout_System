@@ -1,5 +1,5 @@
 import { Command, CommandRunner } from "nest-commander";
-import { SalesPublisher } from "../publisher/sales.publisher";
+import { SalesPublisher } from "../../publisher/sales.publisher";
 
 @Command({
   name: "dispatch",

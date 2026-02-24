@@ -2,7 +2,8 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { runSeeders, SeederOptions } from 'typeorm-extension';
 import { config } from "dotenv"
 import ProductSeeder from './src/database/seeds/productSeeding';
-import { Products } from './src/orders/entities/product.entity';
+import { Products } from './src/shpping/entities/product.entity';
+
 
 
 config();

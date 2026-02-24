@@ -3,7 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ScheduleModule } from "@nestjs/schedule";
 import { RabbitMQConnection } from "../rabbitmq.connection";
 import { SalesPublisher } from "./sales.publisher"
-import { PublishCommand } from "../cli/publish.command";
+import { PublishCommand } from "../cli/publisherCommand/publish.command";
 import { config } from 'dotenv'
 import { SalesOutbox } from "../../outbox/sales-outbox.entity";
 
