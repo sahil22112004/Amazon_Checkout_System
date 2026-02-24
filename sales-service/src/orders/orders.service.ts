@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm'
 import { Order } from './entities/order.entity'
 import { CreateOrderDto } from './dto/create-order.dto'
 import { SalesOutbox, OutboxStatus } from '../outbox/sales-outbox.entity'
+import { Products } from './entities/product.entity'
 
 @Injectable()
 export class OrdersService {
@@ -13,27 +14,48 @@ export class OrdersService {
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
 
+    @InjectRepository(Products)
+    private productRepository: Repository<Products>,
+
     @InjectRepository(SalesOutbox)
     private outboxRepository: Repository<SalesOutbox>,
   ) { }
 
-  async createOrder(CreateOrderDto: CreateOrderDto) {
+  async createOrder(createOrderDto: CreateOrderDto) {
 
-    const existing = await this.orderRepository.findOne({
-      where: { orderId: CreateOrderDto.orderId },
-    });
-    if (existing) {
-      throw new HttpException('This is a custom error message', 409);
-    }
-    const order = this.orderRepository.create({
-      orderId: CreateOrderDto.orderId,
-      customerId: CreateOrderDto.customerId,
-      products: CreateOrderDto.products,
-      orderTotal: CreateOrderDto.orderTotal
-    })
-    return await this.orderRepository.save(order);
+  const existing = await this.orderRepository.findOne({
+    where: { orderId: createOrderDto.orderId },
+  });
 
+  if (existing) {
+    throw new HttpException('Order already exists', 409);
   }
+
+  let totalAmount = 0;
+
+  for (const p of createOrderDto.products) {
+
+    const product = await this.productRepository.findOne({
+      where: { product_id: p.productId }
+    });
+
+    if (!product) {
+      throw new HttpException(`Product ${p.productId} not found`, 404);
+    }
+
+    totalAmount += Number(product.price) * p.quantity;
+  }
+
+  const order = this.orderRepository.create({
+    orderId: createOrderDto.orderId,
+    customerId: createOrderDto.customerId,
+    products: createOrderDto.products,
+    orderTotal: totalAmount,
+    status: 'PENDING'
+  });
+
+  return await this.orderRepository.save(order);
+}
 
   async placeOrder(id:string, CreateOrderDto: CreateOrderDto){
     return this.dataSource.transaction(async (manager) => {
@@ -62,8 +84,8 @@ export class OrdersService {
         eventType: 'order.placed',
         messagePayload: {
           orderId: order.orderId,
+          products: order.products,
           orderTotal: order.orderTotal,
-          billingAccountId: CreateOrderDto.billingAccountId,
         }
       });
 

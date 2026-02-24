@@ -1,38 +1,11 @@
-import {
-  IsString,
-  IsNumber,
-  IsArray,
-  ValidateNested,
-  IsUUID,
-  Min,
-} from 'class-validator'
-import { Type } from 'class-transformer'
+import { IsUUID, IsString } from 'class-validator';
 
-class ProductDto {
-  @IsString()
-  productId: string
-
-  @IsNumber()
-  @Min(1)
-  quantity: number
-}
-
-export class CreateOrderDto {
-  @IsString()
-  orderId: string
+export class CreateShippingDto {
 
   @IsString()
-  customerId: string
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProductDto)
-  products: ProductDto[]
-
-  @IsNumber()
-  @Min(0)
-  orderTotal: number
+  orderId: string;
 
   @IsString()
-  billingAccountId: string
+  shippingAddress: string;
+
 }

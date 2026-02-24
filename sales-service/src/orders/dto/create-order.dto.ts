@@ -29,10 +29,5 @@ export class CreateOrderDto {
   @Type(() => ProductDto)
   products: ProductDto[]
 
-  @IsNumber()
-  @Min(0)
-  orderTotal: number
 
-  @IsString()
-  billingAccountId: string
 }

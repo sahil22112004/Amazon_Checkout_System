@@ -104,16 +104,20 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { RabbitMQConnection } from "../rabbitmq.connection";
 import { ShippingInbox } from "../../inbox/shipping-inbox.entity";
+import { ShippingService } from "./shippingOrder.service";
 
 @Injectable()
 export class RabbitMQConsumer implements OnModuleInit {
+
   constructor(
     @InjectRepository(ShippingInbox)
     private shippingInboxRepo: Repository<ShippingInbox>,
-    private rabbitConnection: RabbitMQConnection
+    private rabbitConnection: RabbitMQConnection,
+    private shippingService: ShippingService
   ) {}
 
   async onModuleInit() {
+
     const channel = await this.rabbitConnection.getChannel();
 
     await channel.assertExchange("order_exchange", "fanout", { durable: true });
@@ -121,107 +125,125 @@ export class RabbitMQConsumer implements OnModuleInit {
     await channel.assertExchange("shipping_order_status_exchange", "fanout", { durable: true });
 
     await channel.assertQueue("shipping_sales_order_status_queue", { durable: true });
-    await channel.assertQueue("siping_billing_order_status_queue", { durable: true });
+    await channel.assertQueue("shipping_billing_order_status_queue", { durable: true });
 
     await channel.bindQueue("shipping_sales_order_status_queue", "order_exchange", "");
-    await channel.bindQueue("siping_billing_order_status_queue", "bill_order_status_exchange", "");
+    await channel.bindQueue("shipping_billing_order_status_queue", "bill_order_status_exchange", "");
 
     console.log("Shipping Consumer Started...");
 
+    // ORDER PLACED
     channel.consume("shipping_sales_order_status_queue", async (msg: any) => {
+
       if (!msg) return;
 
       const data = JSON.parse(msg.content.toString());
 
-      const event = {
-        orderId: data.message.orderId,
-        eventType: data.eventType,
-        status: "success"
-      };
+      if (data.eventType === "order.placed") {
 
-      await this.processEvent(event, channel);
+        const eventId = `${data.message.orderId}_order.placed`;
+
+        const existing = await this.shippingInboxRepo.findOne({
+          where: { eventId }
+        });
+
+        if (!existing) {
+
+          const inbox = this.shippingInboxRepo.create({
+            eventId,
+            eventType: "order.placed"
+          });
+
+          await this.shippingInboxRepo.save(inbox);
+
+          await this.shippingService.saveOrder(
+            data.message.orderId,
+            data.message.products
+          );
+        }
+
+        await this.tryProcess(data.message.orderId, channel);
+      }
 
       channel.ack(msg);
     });
 
-    channel.consume("siping_billing_order_status_queue", async (msg: any) => {
+    // BILLING STATUS
+    channel.consume("shipping_billing_order_status_queue", async (msg: any) => {
+
       if (!msg) return;
 
       const data = JSON.parse(msg.content.toString());
 
-      const event = {
-        orderId: data.orderId,
-        eventType: data.eventType,
-        status: data.status
-      };
+      if (data.status !== "success") {
+        channel.ack(msg);
+        return;
+      }
 
-      await this.processEvent(event, channel);
+      const eventId = `${data.orderId}_order.billed`;
+
+      const existing = await this.shippingInboxRepo.findOne({
+        where: { eventId }
+      });
+
+      if (!existing) {
+
+        const inbox = this.shippingInboxRepo.create({
+          eventId,
+          eventType: "order.billed"
+        });
+
+        await this.shippingInboxRepo.save(inbox);
+      }
+
+      await this.tryProcess(data.orderId, channel);
 
       channel.ack(msg);
     });
   }
 
-  private async processEvent(event: any, channel: any) {
-    const { orderId, eventType, status } = event;
-
-    if (status !== "success") {
-      console.log("Event failed, skipping:", eventType);
-      return;
-    }
-
-    const uniqueEventId = `${orderId}_${eventType}`;
-
-    const existing = await this.shippingInboxRepo.findOne({
-      where: { eventId: uniqueEventId }
-    });
-
-    if (!existing) {
-      const inbox = this.shippingInboxRepo.create({
-        eventId: uniqueEventId,
-        eventType
-      });
-
-      await this.shippingInboxRepo.save(inbox);
-    }
-
-    const placedEventId = `${orderId}_order.placed`;
-    const billedEventId = `${orderId}_order.billed`;
-    const shippedEventId = `${orderId}_order.shipped`;
+  private async tryProcess(orderId: string, channel: any) {
 
     const placed = await this.shippingInboxRepo.findOne({
-      where: { eventId: placedEventId }
+      where: { eventId: `${orderId}_order.placed` }
     });
 
     const billed = await this.shippingInboxRepo.findOne({
-      where: { eventId: billedEventId }
+      where: { eventId: `${orderId}_order.billed` }
     });
 
-    const alreadyShipped = await this.shippingInboxRepo.findOne({
-      where: { eventId: shippedEventId }
+    const shipped = await this.shippingInboxRepo.findOne({
+      where: { eventId: `${orderId}_order.shipped` }
     });
 
-    if (placed && billed && !alreadyShipped) {
-      const shippedInbox = this.shippingInboxRepo.create({
-        eventId: shippedEventId,
-        eventType: "order.shipped"
-      });
+    if (!placed || !billed) return;
 
-      await this.shippingInboxRepo.save(shippedInbox);
+    if (shipped) return;
 
-      const payload = {
-        orderId,
-        eventType: "order.shipped",
-        status: "success"
-      };
+    const result = await this.shippingService.handleShipping(orderId);
 
-      channel.publish(
-        "shipping_order_status_exchange",
-        "",
-        Buffer.from(JSON.stringify(payload)),
-        { persistent: true }
-      );
+    const shippedEventId = `${orderId}_order.shipped`;
 
-      console.log("Order shipped successfully:", orderId);
-    }
+    const inbox = this.shippingInboxRepo.create({
+      eventId: shippedEventId,
+      eventType: "order.shipped"
+    });
+
+    await this.shippingInboxRepo.save(inbox);
+
+    const payload = {
+      orderId,
+      eventType: "order.shipped",
+      status: result
+    };
+
+    channel.publish(
+      "shipping_order_status_exchange",
+      "",
+      Buffer.from(JSON.stringify(payload)),
+      { persistent: true }
+    );
+
+    console.log("Shipping result:", orderId, result);
   }
 }

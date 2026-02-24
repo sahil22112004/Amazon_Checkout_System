@@ -5,12 +5,13 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { consumeCommand } from "../cli/consumer.command";
 import { config } from "dotenv";
 import { ShippingInbox } from "../../inbox/shipping-inbox.entity";
+import { ShippingOrderItem } from "../../shpping/entities/placedOrderItem.entity";
 
 config()
 
 @Module({
   imports: [
-      TypeOrmModule.forFeature([ShippingInbox]),
+      TypeOrmModule.forFeature([ShippingInbox,ShippingOrderItem]),
     TypeOrmModule.forRoot({
       type: "postgres",
       host: process.env.DB_HOST,
@@ -18,7 +19,7 @@ config()
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [ShippingInbox],
+      entities: [ShippingInbox,ShippingOrderItem],
       synchronize: false,
     }),
   ],

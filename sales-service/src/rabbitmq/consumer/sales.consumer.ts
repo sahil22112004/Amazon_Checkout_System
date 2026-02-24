@@ -19,7 +19,7 @@ export class RabbitMQConsumer implements OnModuleInit {
             durable: true,
         });
 
-        await channel.assertExchange("shipping_order_status_Exchange", "fanout", {
+        await channel.assertExchange("shipping_order_status_exchange", "fanout", {
             durable: true,
         });
 
@@ -39,7 +39,7 @@ export class RabbitMQConsumer implements OnModuleInit {
 
         await channel.bindQueue(
             "shipping_order_status_queue",
-            "shipping_order_status_Exchange",
+            "shipping_order_status_exchange",
             ""
         );
         console.log("sales Consumer Started...");

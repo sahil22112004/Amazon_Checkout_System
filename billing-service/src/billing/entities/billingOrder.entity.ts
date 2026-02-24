@@ -3,13 +3,13 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeor
 @Entity('billingOrder')
 export class BillingOrder {
 
-    @PrimaryGeneratedColumn('uuid')
-    order_id: string
+  @PrimaryGeneratedColumn('uuid')
+  order_id: string
 
-    @Column('uuid')
-    billing_account_id: string
+  @Column('uuid')
+  billing_account_id: string
 
-    @Column()
-    billing_address: number
+  @Column()
+  billing_address: string
 
 }

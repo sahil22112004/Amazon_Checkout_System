@@ -8,12 +8,13 @@ import { config } from "dotenv";
 import { BillingService } from "./billing.service";
 import { Payment } from "../../entities/payment.entity";
 import { BillingAccount } from "../../entities/billing-account.entity";
+import { BillingOrder } from "../../billing/entities/billingOrder.entity";
 
 config()
 
 @Module({
   imports: [
-      TypeOrmModule.forFeature([BillingInbox, BillingAccount,Payment,]),
+      TypeOrmModule.forFeature([BillingInbox, BillingAccount,Payment,BillingOrder]),
     TypeOrmModule.forRoot({
       type: "postgres",
       host: process.env.DB_HOST,
@@ -21,7 +22,7 @@ config()
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [BillingInbox, BillingAccount,Payment],
+      entities: [BillingInbox, BillingAccount,Payment,BillingOrder],
       synchronize: false,
     }),
   ],

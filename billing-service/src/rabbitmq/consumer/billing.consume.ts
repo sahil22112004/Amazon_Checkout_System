@@ -78,7 +78,7 @@ export class RabbitMQConsumer implements OnModuleInit {
                         if (payment_status.message == 'payment_successfully') {
                             const payload = {
                                 orderId: data.message.orderId,
-                                eventType:'order.Billed',
+                                eventType:'order.billed',
                                 status: 'success'
                             }
                             channel.publish(
@@ -91,7 +91,7 @@ export class RabbitMQConsumer implements OnModuleInit {
                         } else {
                             const payload = {
                                 orderId: data.message.orderId,
-                                eventType:'order.Billed',
+                                eventType:'order.billed',
                                 status: 'failed'
                             }
                             channel.publish(

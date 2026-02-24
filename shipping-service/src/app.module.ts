@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ShppingModule } from './shpping/shpping.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Products } from './shpping/entities/product.entity';
+import { ShippingOrder } from './shpping/entities/shippingorder.entity';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -13,7 +14,7 @@ import { Products } from './shpping/entities/product.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [Products],
+      entities: [Products,ShippingOrder],
       synchronize: false,
     }),ShppingModule],
   controllers: [AppController],
