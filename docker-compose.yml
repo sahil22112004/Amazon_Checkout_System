@@ -34,6 +34,91 @@ services:
     depends_on:
       - db
 
+  sales-service:
+    build:
+      context: ./sales-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: nest-backend-sales-service
+    restart: always
+    volumes:
+      - ./sales-service:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASS}
+      DB_DATABASE: ${SALES_DB_DATABASE}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    depends_on:
+      - db
+
+  
+  billing-service:
+    build:
+      context: ./billing-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: nest-backend-billing-service
+    restart: always
+    volumes:
+      - ./billing-service:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASS}
+      DB_DATABASE: ${BILLING_DB_DATABASE}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    depends_on:
+      - db
+
+
+  shipping-service:
+    build:
+      context: ./shipping-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: nest-backend-shipping-service
+    restart: always
+    volumes:
+      - ./shipping-service:/app
+      - /app/node_modules
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASS}
+      DB_DATABASE: ${SHIPPING_DB_DATABASE}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    depends_on:
+      - db
+
+  apigateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile
+      target: development
+    container_name: nest-backend-apigateway
+    restart: always
+    volumes:
+      - ./apigateway:/app
+      - /app/node_modules
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
 
 volumes:
   pgdata:

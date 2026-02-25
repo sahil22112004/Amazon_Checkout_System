@@ -5,6 +5,9 @@ import { ShppingModule } from './shpping/shpping.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Products } from './shpping/entities/product.entity';
 import { ShippingOrder } from './shpping/entities/shippingorder.entity';
+import {config} from 'dotenv'
+
+config()
 
 @Module({
   imports: [TypeOrmModule.forRoot({

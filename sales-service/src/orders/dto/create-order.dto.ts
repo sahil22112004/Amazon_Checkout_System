@@ -10,7 +10,7 @@ import { Type } from 'class-transformer'
 
 class ProductDto {
   @IsString()
-  productId: string
+  product_id: string
 
   @IsNumber()
   @Min(1)

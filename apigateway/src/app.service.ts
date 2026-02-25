@@ -9,6 +9,8 @@ export class AppService {
 
   async createOrder(payload: any) {
 
+    console.log("payload is",payload) 
+
     try {
 
       const salesCall = firstValueFrom(

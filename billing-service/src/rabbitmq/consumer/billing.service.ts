@@ -17,48 +17,90 @@ export class BillingService {
 
     @InjectRepository(Payment)
     private paymentRepo: Repository<Payment>,
-  ) {}
+  ) { }
 
   async handleOrderPlaced(payload: any) {
 
-  console.log("payload is", payload)
+    console.log("payload is", payload)
 
-  const billingOrder = await this.billingOrderRepo.findOne({
-    where: { order_id: payload.orderId }
-  })
+    const billingOrder = await this.billingOrderRepo.findOne({
+      where: { order_id: payload.orderId }
+    })
 
-  if (!billingOrder) {
-    console.log("Billing order not found")
-    return { message: 'payment_failed' }
+    if (!billingOrder) {
+      console.log("Billing order not found")
+      return { message: 'payment_failed' }
+    }
+
+    const account = await this.accountRepo.findOne({
+      where: { billing_account_id: billingOrder.billing_account_id }
+    })
+
+    if (!account) {
+      console.log("Billing account not found")
+      return { message: 'payment_failed' }
+    }
+
+    if (Number(account.balance) < Number(payload.orderTotal)) {
+      console.log("Insufficient balance")
+      return { message: 'payment_failed' }
+    }
+
+    account.balance =
+      Number(account.balance) - Number(payload.orderTotal)
+
+    await this.accountRepo.save(account)
+
+    const payment = this.paymentRepo.create({
+      orderId: payload.orderId,
+      amount: payload.orderTotal,
+      status: "PAID",
+    })
+
+    await this.paymentRepo.save(payment)
+
+    return { message: 'payment_successfully' }
   }
 
-  const account = await this.accountRepo.findOne({
-    where: { billing_account_id: billingOrder.billing_account_id }
-  })
+  async handleOrderRefund(orderId: any) {
 
-  if (!account) {
-    console.log("Billing account not found")
-    return { message: 'payment_failed' }
+    console.log("comming in handler handleOrderRefund")
+
+    const billingOrder = await this.billingOrderRepo.findOne({
+      where: { order_id: orderId }
+    })
+
+    if (!billingOrder) {
+      console.log("Billing order not found")
+      return { message: 'refund_failed' }
+    }
+
+    const account = await this.accountRepo.findOne({
+      where: { billing_account_id: billingOrder.billing_account_id }
+    })
+
+    const orderPayment = await this.paymentRepo.findOne({
+      where: { orderId: orderId }
+    })
+
+    if (!account) {
+      console.log('account not found')
+      return { message: 'refund_failed' }
+    }
+
+    if (!orderPayment) {
+      console.log('orderPayment not found not found')
+      return { message: 'refund_failed' }
+    }
+
+    const ammountToRefund = orderPayment.amount
+    account.balance += ammountToRefund
+    console.log( "account after save is ",account)
+    await this.accountRepo.save(account)
+    orderPayment.status = 'REFUNDED'
+    await this.paymentRepo.save(orderPayment)
+
+    return { message: 'refund_success' }
+
   }
-
-  if (Number(account.balance) < Number(payload.orderTotal)) {
-    console.log("Insufficient balance")
-    return { message: 'payment_failed' }
-  }
-
-  account.balance =
-    Number(account.balance) - Number(payload.orderTotal)
-
-  await this.accountRepo.save(account)
-
-  const payment = this.paymentRepo.create({
-    orderId: payload.orderId,
-    amount: payload.orderTotal,
-    status: "PAID",
-  })
-
-  await this.paymentRepo.save(payment)
-
-  return { message: 'payment_successfully' }
-}
 }

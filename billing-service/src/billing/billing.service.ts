@@ -13,10 +13,11 @@ export class BillingService {
   ) {}
 
   async createBillingOrder(dto: PlaceBillingOrderDto) {
+    console.log('comming in billing craeet ordre ',dto)
 
     const billingOrder = this.billingOrderRepository.create({
       order_id: dto.orderId,
-      billing_account_id: dto.billingAccountId,
+      billing_account_id: 'a2f89d3c-b671-4fd6-88cd-f8cdb66f09e1',
       billing_address: dto.billingAddress,
     })
 

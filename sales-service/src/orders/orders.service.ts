@@ -34,13 +34,15 @@ export class OrdersService {
   let totalAmount = 0;
 
   for (const p of createOrderDto.products) {
+    console.log("product is ",p)
 
     const product = await this.productRepository.findOne({
-      where: { product_id: p.productId }
+      where: { product_id: p.product_id }
     });
+    console.log("getting product is ", product)
 
     if (!product) {
-      throw new HttpException(`Product ${p.productId} not found`, 404);
+      throw new HttpException(`Product ${p.product_id} not found`, 404);
     }
 
     totalAmount += Number(product.price) * p.quantity;
