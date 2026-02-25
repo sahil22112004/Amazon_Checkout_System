@@ -17,10 +17,6 @@ export class RabbitMQConsumer implements OnModuleInit {
     async onModuleInit() {
         const channel = await this.rabbitConnection.getChannel();
 
-        // await channel.assertExchange("orders_exchange", "direct", {
-        //   durable: true,
-        // });
-
         await channel.assertExchange("order_exchange", "fanout", {
             durable: true,
         });
@@ -29,15 +25,19 @@ export class RabbitMQConsumer implements OnModuleInit {
             durable: true,
         });
 
-        // await channel.assertQueue("billing_queue", {
-        //   durable: true,
-        // });
+        await channel.assertExchange("shipping_order_status_exchange", "fanout", {
+            durable: true,
+        });
 
-        // await channel.bindQueue(
-        //   "billing_queue",
-        //   "orders_exchange",
-        //   "order.placed"
-        // );
+        await channel.assertQueue("billing_shipping_order_status_queue", {
+            durable: true,
+        });
+
+        await channel.bindQueue(
+            "billing_shipping_order_status_queue",
+            "shipping_order_status_exchange",
+            ""
+        );
 
         await channel.assertQueue("order_queue", { durable: true });
 
@@ -54,13 +54,13 @@ export class RabbitMQConsumer implements OnModuleInit {
             async (msg: any) => {
                 if (!msg) return;
 
-                console.log('consumer working', msg)
+                console.log('consumer working')
 
                 try {
                     const content = msg.content.toString();
                     const data = JSON.parse(content);
 
-                    console.log("Received message:", data);
+                    console.log("Received message from order queue:", data);
 
                     const existing = await this.billingInboxRepo.findOne({
                         where: { eventId: data.messageId },
@@ -115,5 +115,27 @@ export class RabbitMQConsumer implements OnModuleInit {
             },
             { noAck: false }
         );
+
+        channel.consume(
+            "billing_shipping_order_status_queue",
+            async (msg: any) => {
+                if (!msg) return;
+
+                const content = msg.content.toString();
+                const data = JSON.parse(content);
+                console.log('shipping data is ', data)
+
+                if (data.status == 'success') {
+                    return channel.ack(msg);
+
+                }else{
+                    console.log('comming in these',data.status)
+
+                    const refundStatus = await this.billingService.handleOrderRefund(data.orderId)
+                    console.log("refund status is ",refundStatus)
+                }
+                channel.ack(msg);
+
+            }, { noAck: false })
     }
 }

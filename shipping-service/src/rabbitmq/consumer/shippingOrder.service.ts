@@ -5,7 +5,7 @@ import { Repository } from "typeorm"
 import { Products } from "../../shpping/entities/product.entity"
 
 @Injectable()
-export class ShippingService {
+export class ShippingorderService {
 
   constructor(
     @InjectRepository(ShippingOrderItem)

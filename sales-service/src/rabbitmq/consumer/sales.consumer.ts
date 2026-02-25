@@ -93,8 +93,17 @@ export class RabbitMQConsumer implements OnModuleInit {
                         console.log('order not found')
                     }
 
+                }else{
+                    console.log('comming in these',data.status)
+                    const order = await this.orderRepository.findOne({ where: { orderId: data.orderId } })
+                    console.log("order is ",order)
+                    if (order !== null) {
+                        order.status = "CANCELED"
+                        await this.orderRepository.save(order)
+                    } else {
+                        console.log('order not found')
+                    }
                 }
-
                 channel.ack(msg);
 
             }, { noAck: false })

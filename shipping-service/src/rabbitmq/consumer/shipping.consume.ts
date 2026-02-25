@@ -104,7 +104,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { RabbitMQConnection } from "../rabbitmq.connection";
 import { ShippingInbox } from "../../inbox/shipping-inbox.entity";
-import { ShippingService } from "./shippingOrder.service";
+import { ShippingorderService } from "./shippingOrder.service";
 
 @Injectable()
 export class RabbitMQConsumer implements OnModuleInit {
@@ -113,7 +113,7 @@ export class RabbitMQConsumer implements OnModuleInit {
     @InjectRepository(ShippingInbox)
     private shippingInboxRepo: Repository<ShippingInbox>,
     private rabbitConnection: RabbitMQConnection,
-    private shippingService: ShippingService
+    private shippingService: ShippingorderService
   ) {}
 
   async onModuleInit() {
@@ -132,7 +132,6 @@ export class RabbitMQConsumer implements OnModuleInit {
 
     console.log("Shipping Consumer Started...");
 
-    // ORDER PLACED
     channel.consume("shipping_sales_order_status_queue", async (msg: any) => {
 
       if (!msg) return;
@@ -147,7 +146,10 @@ export class RabbitMQConsumer implements OnModuleInit {
           where: { eventId }
         });
 
-        if (!existing) {
+        if(existing) {
+        channel.ack(msg);
+        return
+      }
 
           const inbox = this.shippingInboxRepo.create({
             eventId,
@@ -163,19 +165,19 @@ export class RabbitMQConsumer implements OnModuleInit {
         }
 
         await this.tryProcess(data.message.orderId, channel);
-      }
 
       channel.ack(msg);
     });
 
-    // BILLING STATUS
     channel.consume("shipping_billing_order_status_queue", async (msg: any) => {
 
       if (!msg) return;
 
       const data = JSON.parse(msg.content.toString());
+      console.log("shipping_billing_order_status_queue data is ",data)
 
       if (data.status !== "success") {
+        console.log("cooming in these ", data.status)
         channel.ack(msg);
         return;
       }
@@ -185,16 +187,17 @@ export class RabbitMQConsumer implements OnModuleInit {
       const existing = await this.shippingInboxRepo.findOne({
         where: { eventId }
       });
-
-      if (!existing) {
-
+      
+      if(existing) {
+        channel.ack(msg);
+        return
+      }
         const inbox = this.shippingInboxRepo.create({
           eventId,
           eventType: "order.billed"
         });
 
         await this.shippingInboxRepo.save(inbox);
-      }
 
       await this.tryProcess(data.orderId, channel);
 
